@@ -56,5 +56,18 @@ describe('Car',() => {
     });
   });
 
+  describe('find', () => {
+    const heroes = [{id: 1, name: 'Batman'}, {id:2, name: 'Black Panther'}]
+    const car = new Car(heroes);
+
+    test('doesnt find', () => {
+      expect(car.find(-1)).toEqual(null);
+    });
+
+    test('find', () => {
+      expect(car.find(heroes[0].id)).toEqual(heroes[0]);
+    });
+
+  });
 });
 
