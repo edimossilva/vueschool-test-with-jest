@@ -17,8 +17,21 @@ export default class Car {
   all() {
     return this.$collection.map(entry => this.getCopy(entry));
   }
-  update() {}
-  getCopy(entry) {
-    return Object.assign({}, entry);
+  update(id, data) {
+    let itemIndex = this.all().findIndex(item => {
+      return item.id == id
+    });
+    if (itemIndex < 0 ) {
+      return false;
+    }
+    this.$collection.splice(
+      itemIndex,
+      1,
+      this.getCopy(data, this.$collection[itemIndex])
+    );
+  }
+
+  getCopy(entry, origin = {}) {
+    return Object.assign(origin, entry);
   }
 }
