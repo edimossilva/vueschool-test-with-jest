@@ -1,101 +1,138 @@
 import Car from '../../../../src/chapters/chapter2/lessons/Car'
 
-describe('Car',() => {
-  test('constructor', () => {
-    expect(new Car).toBeInstanceOf(Car)
-  });
+function createCar(data = [], options = {}) {
+  return new Car({
+    ...options,
+    data
+  })
+}
 
-  test('model structure', () => {
-    expect(new Car).toEqual(
+test('new works', () => {
+  expect(createCar()).toBeInstanceOf(Car)
+})
+
+test('model structure', () => {
+  expect(createCar()).toEqual(
+    expect.objectContaining({
+      $collection: expect.any(Array),
+      $options: expect.objectContaining({
+        primaryKey: 'id'
+      }),
+      record: expect.any(Function),
+      all: expect.any(Function),
+      find: expect.any(Function),
+      update: expect.any(Function)
+    })
+  )
+})
+
+describe('customizations', () => {
+  test('we can customize the primaryKey', () => {
+    const model = createCar([], {
+      primaryKey: 'name'
+    })
+    expect(model.$options.primaryKey).toBe('name')
+  })
+})
+
+describe('record', () => {
+  const heroes = [{ id: 1, name: 'Batman' }, { name: 'Black Panther' }]
+
+  test('can add data to the collection', () => {
+    const model = createCar()
+    model.record(heroes)
+    expect(model.$collection).toEqual([
+      heroes[0],
+      {
+        id: expect.any(Number),
+        name: heroes[1].name
+      }
+    ])
+  })
+
+  test('gets called when data is passed to Model', () => {
+    const spy = jest.spyOn(Model.prototype, 'record')
+    const model = createCar(heroes)
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+})
+
+describe('all', () => {
+  test('returns empty model', () => {
+    const model = createCar()
+    expect(model.all()).toEqual([])
+  })
+
+  test('returns model data', () => {
+    const model = createCar([{ name: 'Batman' }, { name: 'Joker' }])
+    expect(model.all().length).toBe(2)
+  })
+
+  test('original data stays intact', () => {
+    const model = createCar([{ name: 'Batman' }])
+    const data = model.all()
+    data[0].name = 'Joker'
+
+    expect(model.$collection[0].name).toBe('Batman')
+  })
+})
+
+describe('find', () => {
+  const heroes = [{ id: 1, name: 'Batman' }, { name: 'Black Panther' }]
+
+  test('returns null if nothing matches', () => {
+    const model = createCar()
+    expect(model.find(1)).toEqual(null)
+  })
+
+  test('find returns a matching entry', () => {
+    const model = createCar(heroes)
+    expect(model.find(1)).toEqual(heroes[0])
+  })
+})
+
+describe('remove', () => {
+  const heroes = [{ id: 1, name: 'Batman' }, { name: 'Black Panther' }]
+
+  let model
+
+  beforeEach(() => {
+    const dataset = JSON.parse(JSON.stringify(heroes))
+    model = createCar(dataset)
+  })
+
+  test('will remove object with given primaryKey', () => {
+    model.remove(1)
+    expect(model.$collection.length).toBe(1)
+  })
+})
+
+describe('update', () => {
+  const heroesAndVillains = [{ id: 1, name: 'Batman' }]
+  let model
+
+  beforeEach(() => {
+    const dataset = JSON.parse(JSON.stringify(heroesAndVillains))
+    model = createCar(dataset)
+  })
+
+  test('an entry by id', () => {
+    model.update(1, { name: 'Joker' })
+    expect(model.find(1).name).toBe('Joker')
+  })
+
+  test('extend an entry by id', () => {
+    model.update(1, { cape: true })
+    expect(model.find(1)).toEqual(
       expect.objectContaining({
-        $collection: expect.any(Array),
-        record: expect.any(Function),
-        find: expect.any(Function),
-        all: expect.any(Function),
-        update: expect.any(Function),
+        name: 'Batman',
+        cape: true
       })
-    );
-  });
+    )
+  })
 
-  describe('record', () => {
-    const heroes = [{name: 'Batamn'}, {name: 'Black Panther'}]
-    test('add data to collection',() => {
-      const car = new Car();
-      car.record(heroes);
-      expect(car.$collection).toEqual(heroes);
-    });
-
-    test('called on constructor',() => {
-      const spy = jest.spyOn(Car.prototype, 'record');
-      const car = new Car(heroes);
-      expect(spy).toHaveBeenCalled();
-      spy.mockRestore();
-    });
-  });
-
-  describe('all', () => {
-    const heroes = [{name: 'Batman'}, {name: 'Black Panther'}]
-
-    test('returns empty car', () => {
-      const car = new Car();
-      expect(car.all()).toEqual([]);
-      expect(car.all().length).toEqual(0);
-    });
-
-    test('returns not empty array', () => {
-      const car = new Car(heroes);
-      expect(car.all()).toEqual(heroes);
-      expect(car.all().length).toEqual(2);
-    });
-
-    test('cant afect the data', () => {
-      const car = new Car(heroes);
-      const dataHeroes = car.all();
-      dataHeroes[0].name = "Super man";
-      expect(car.all()[0].name).toEqual("Batman");
-    });
-  });
-
-  describe('find', () => {
-    const heroes = [{id: 1, name: 'Batman'}, {id:2, name: 'Black Panther'}]
-    const car = new Car(heroes);
-
-    test('doesnt find', () => {
-      expect(car.find(-1)).toEqual(null);
-    });
-
-    test('find', () => {
-      expect(car.find(heroes[0].id)).toEqual(heroes[0]);
-    });
-  });
-
-  describe('update', () => {
-    let heroes
-    let car
-    beforeEach(() => {
-      heroes = [{id: 1, name: 'Batman'}, {id:2, name: 'Black Panther'}]
-      car = new Car(heroes);
-    });
-
-    test('an entry by id', () => {
-      const newHero = {id: 3, name: 'Super Man'};
-      car.update(heroes[0].id, newHero);
-      expect(car.find(heroes[0].id)).toEqual(newHero);
-    });
-
-    test('extend an entry by id', () => {
-      car.update(heroes[0].id, {cape: true});
-      expect(car.find(heroes[0].id)).toEqual(
-        expect.objectContaining({
-          name: 'Batman',
-          cape: true
-        })
-      )
-    });
-    test('returns false when record is not found', () => {
-      const data = car.update(-1, {});
-      expect(data).toBe(false);
-    });
-  });
-});
-
+  test('return  false if no entry matches', () => {
+    expect(model.update(2, {})).toBe(false)
+  })
+})
