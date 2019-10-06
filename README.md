@@ -1,1 +1,0 @@
-# vueschool-test-with-jest
