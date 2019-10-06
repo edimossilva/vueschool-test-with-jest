@@ -23,16 +23,38 @@ describe('Car',() => {
       const car = new Car();
       car.record(heroes);
       expect(car.$collection).toEqual(heroes);
-    })
+    });
 
     test('called on constructor',() => {
       const spy = jest.spyOn(Car.prototype, 'record');
       const car = new Car(heroes);
       expect(spy).toHaveBeenCalled();
       spy.mockRestore();
-    })
+    });
+  });
 
-  })
+  describe('all', () => {
+    const heroes = [{name: 'Batman'}, {name: 'Black Panther'}]
+
+    test('returns empty car', () => {
+      const car = new Car();
+      expect(car.all()).toEqual([]);
+      expect(car.all().length).toEqual(0);
+    });
+
+    test('returns not empty array', () => {
+      const car = new Car(heroes);
+      expect(car.all()).toEqual(heroes);
+      expect(car.all().length).toEqual(2);
+    });
+
+    test('cant afect the data', () => {
+      const car = new Car(heroes);
+      const dataHeroes = car.all();
+      dataHeroes[0].name = "Super man";
+      expect(car.all()[0].name).toEqual("Batman");
+    });
+  });
 
 });
 

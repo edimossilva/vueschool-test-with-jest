@@ -10,7 +10,7 @@ export default class Car {
   }
   find() {}
   all() {
-    return this.$collection;
+    return this.$collection.map(entry => Object.assign({}, entry));
   }
   update() {}
 }
